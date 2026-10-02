@@ -53,13 +53,13 @@ python run_experiments.py --quick  # ~20 s
 python run_experiments.py          # full grid, 10 replications, ~2 min
 ```
 
-Outputs go to `results/`.
+Outputs go to a `results/` folder, which the script creates. The figures shown below are included in the repository.
 
 ## First (illustrative) results
 
-![Delegation boundary](results/fig_delegation_boundary.png)
+![Delegation boundary](fig_delegation_boundary.png)
 
-![Regret vs prediction error](results/fig_regret_vs_prediction.png)
+![Regret vs prediction error](fig_regret_vs_prediction.png)
 
 What the starter model already shows. These are hypotheses to test with calibrated data, not findings.
 
@@ -100,11 +100,11 @@ What the starter model already shows. These are hypotheses to test with calibrat
 
 ## Public data: CPMM indicators
 
-`cpmm/cpmm_explore.py` gives a first look at the CAREC Corridor Performance Measurement and Monitoring (CPMM)
+`cpmm_explore.py` gives a first look at the CAREC Corridor Performance Measurement and Monitoring (CPMM)
 trade facilitation indicators for Kazakhstan rail, 2010-2024. Download the country and border-crossing-point
-CSV files from https://cpmm.carecprogram.org/data/ into `cpmm/` and run `python cpmm_explore.py`.
+CSV files from https://cpmm.carecprogram.org/data/ into the same folder and run `python cpmm_explore.py`.
 
-![CPMM Kazakhstan rail](cpmm/cpmm_kazakhstan_rail.png)
+![CPMM Kazakhstan rail](cpmm_kazakhstan_rail.png)
 
 Rail border-crossing times at Dostyk and Altynkol rose from about 45-48 hours (2019) to 76-83 hours (2022)
 and fell to about 60 hours (2024). Delays have made up more than 80% of rail transit time since 2021. This
