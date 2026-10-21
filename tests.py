@@ -35,6 +35,14 @@ def test_adaptation_beats_no_adaptation():
         assert total(run_once(p, "ORACLE", s)) < total(run_once(p, "D0", s))
 
 
+def test_tau_rule_extremes():
+    """tau_auto_h above every window -> D2T acts alone like D2;
+    theta = 0 and tau_auto_h = 0 -> D2T reviews everything like D1."""
+    p = Params(horizon_h=24 * 120, vary_window=True)
+    assert run_once(replace(p, tau_auto_h=100.0), "D2T", 1) == run_once(p, "D2", 1)
+    assert run_once(replace(p, theta=0.0, tau_auto_h=0.0), "D2T", 1) == run_once(p, "D1", 1)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

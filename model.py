@@ -106,6 +106,9 @@ class Params:
 
     # --- selective autonomy (D2T) -------------------------------------------
     theta: float = 0.45                  # autonomous if sigma_i <= theta
+    tau_auto_h: float = 4.0 # ... or if less than this is left before J
+    vary_window: bool = False # True: the alert can reach a train close to J
+    window_min_h: float = 2.0 # shortest time left before J (if vary_window)
 
     # --- wait option ----------------------------------------------------------
     wait_h: float = 8.0
@@ -227,25 +230,27 @@ class Movement:
         end_A = sim.aktau.closure_end(t)
         if end_A is None or sim.arch == "D0":
             self.affected = end_A is not None
-            sim.eng.at(t + sim.p.tau_h, self.at_J)
+            sim.eng.at(t + self.rnd["w"], self.at_J)
             return
         self.affected = True
         arch = sim.arch
         if arch == "D2T":
-            arch = "D2" if self.rnd["sigma_i"] <= sim.p.theta else "D1"
+            confident = self.rnd["sigma_i"] <= sim.p.theta
+            no_time = self.rnd["w"] < sim.p.tau_auto_h
+            arch = "D2" if (confident or no_time) else "D1"
         self.path = arch
         if arch == "ORACLE":
             self.execute(sim.decide(self, t, "oracle", allow_wait=False), t)
-            sim.eng.at(t + sim.p.tau_h, self.at_J)
+            sim.eng.at(t + self.rnd["w"], self.at_J)
         elif arch == "D2":
             self.execute(sim.decide(self, t), t)
-            sim.eng.at(t + sim.p.tau_h, self.at_J)
+            sim.eng.at(t + self.rnd["w"], self.at_J)
         else:  # D1: human review
             self.reviewed = True
             L = self.rnd["L"]
-            if L <= sim.p.tau_h:
+            if L <= self.rnd["w"]:
                 sim.eng.at(t + L, self.review_done)
-            sim.eng.at(t + sim.p.tau_h, self.at_J)
+            sim.eng.at(t + self.rnd["w"], self.at_J)
 
     def review_done(self):
         t = self.sim.eng.now
@@ -265,7 +270,7 @@ class Movement:
     def at_J(self):
         sim, p, t = self.sim, self.sim.p, self.sim.eng.now
         # review not finished before the junction
-        if self.reviewed and self.rnd["L"] > p.tau_h:
+        if self.reviewed and self.rnd["L"] > self.rnd["w"]:
             self.missed_window = True
             if p.late_review == "hold":
                 sim.eng.at(self.tP + self.rnd["L"], self.review_done_at_J)
@@ -376,6 +381,8 @@ class Simulation:
             t += d + rng.exponential(p.closure_interarrival_mean_h)
         self.aktau = Terminal(self, "aktau", p.aktau_headway_h, p.aktau_cap, closures_a)
         self.kuryk = Terminal(self, "kuryk", p.kuryk_headway_h, p.kuryk_cap, closures_k)
+        # time left before commitment; drawn last so earlier draws stay identical
+        self.rnd["uw"] = rng.random(n)
 
     def movement_rnd(self, i):
         p, r = self.p, self.rnd
@@ -385,6 +392,7 @@ class Simulation:
             "T1": r["T1"][i], "eps": r["eps"][i], "sigma_i": sigma_i,
             "L": -p.review_mean_h * math.log(1 - r["uL"][i]),
             "eh": r["eh"][i],
+            "w": (p.window_min_h + (p.tau_h - p.window_min_h) * r["uw"][i]) if p.vary_window else p.tau_h,
         }
 
     # ---- prediction and decisions ----------------------------------------------
@@ -409,7 +417,7 @@ class Simulation:
     def costs(self, m: Movement, t, who="ai"):
         """Predicted remaining cost of (CONTINUE, REROUTE) from time t."""
         p = self.p
-        to_J = max(0.0, m.tP + p.tau_h - t)
+        to_J = max(0.0, m.tP + m.rnd["w"] - t)
         res = []
         for term, leg, extra in ((self.aktau, p.J_to_aktau_h, 0.0),
                                  (self.kuryk, p.J_to_kuryk_h, p.reroute_cost)):
