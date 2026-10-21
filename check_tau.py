@@ -6,8 +6,9 @@ def regret(p, arch, seeds=range(10)):
     out = []
     for s in seeds:
         orc = {r["id"]: r["cost"] for r in run_once(p, "ORACLE", s)}
-        aff = [r for r in run_once(p, arch, s) if r["affected"]]
-        out.append(np.mean([r["cost"] - orc[r["id"]] for r in aff]))
+        res = run_once(p, arch, s)
+        aff = [r for r in res if r["affected"]]
+        out.append((sum(r["cost"] for r in res) - sum(orc[r["id"]] for r in res)) / max(1, len(aff)))        
     return np.mean(out)
 
 base = Params(vary_window=True, review_mean_h=6.0)
