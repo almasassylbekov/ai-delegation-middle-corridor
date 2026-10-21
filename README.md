@@ -22,7 +22,7 @@ The model is written in plain Python + numpy, with its own small event engine, s
 | **D0** | Predefined rule, no prediction-dependent adaptation (always continue) |
 | **D1** | AI recommendation → human review → execution |
 | **D2** | AI decision executed immediately, no routine human review |
-| **D2T** | Selective autonomy: D2 when the AI's own uncertainty ≤ θ, otherwise D1 |
+| **D2T** | Selective autonomy: D2 when the AI's own uncertainty ≤ θ or less than `tau_auto_h` hours remain before the junction J, otherwise D1 |
 | **ORACLE** | Benchmark with perfect knowledge of the closure end and zero latency |
 
 **Decision regret** is an architecture's total cost minus the ORACLE's total cost. It is computed
@@ -38,7 +38,7 @@ architectures. It is reported per affected movement.
 | Human review effectiveness | The reviewer has an own estimate (error `human_sigma`) and is **anchored** on the AI (`anchoring`, stronger under shift = automation bias). The reviewer can both *catch* wrong recommendations and *falsely override* correct ones. Both rates come out of the model; they are not inputs | RQ2 |
 | Decision latency | Review delay ~ Exp(`review_mean_h`). If the review is not finished before the junction (commitment window τ), the train holds, or proceeds on the default route | RQ2 |
 | Reversibility | A reroute committed before the junction can be undone there. The cost is `reversal_cost_fixed + reversal_cost_per_h × time since commitment` | RQ2 |
-| Delegation boundary | Grid over prediction error × review delay × regime. The selective policy D2T is parameterised by θ | RQ3 |
+| Delegation boundary | Grid over prediction error × review delay × regime. The selective policy D2T is parameterised by the time-to-commitment threshold `tau_auto_h` and by θ | RQ3 |
 
 Network: inland origin → decision point P → (τ = 12 h) → junction J → Aktau (6 h) or Kuryk
 (10 h) → ferry queue (Aktau every 5 h; Kuryk every 8 h) → crossing to Alat (20 h). Closures hit
@@ -81,7 +81,7 @@ What the starter model already shows. These are hypotheses to test with calibrat
 
 `sigma_base`, `bias`, `distribution_shift`, `shift_bias`, `info_gain_per_h`,
 `review_mean_h`, `human_sigma`, `anchoring`, `anchoring_under_shift`, `override_margin`,
-`late_review`, `tau_h`, `reversal_cost_*`, `theta`, `reroute_cost`, `holding_per_h`,
+`late_review`, `tau_h`, `reversal_cost_*`, `theta`, `tau_auto_h`, `vary_window`, `window_min_h`, `reroute_cost`, `holding_per_h`,
 `late_penalty_per_h`, and the terminal headways and capacities.
 
 ## Calibration plan (PhD Year 1)
@@ -95,7 +95,7 @@ What the starter model already shows. These are hypotheses to test with calibrat
 
 - Queue-based cost estimates are myopic. They ignore the externality of many simultaneous reroutes, which the DES itself does capture.
 - One disruption type at one terminal. Next: weather fields that affect both ports, and border/yard congestion.
-- θ in D2T is not optimised yet. Next: search over threshold policies (θ, τ) to map the optimal delegation boundary.
+- θ in D2T is now combined with the time rule `tau_auto_h`; neither threshold is optimised yet. Next: search over threshold policies (θ, τ) to map the optimal delegation boundary.
 - A stylised analytical model (optimal stopping) to derive propositions that the DES then tests.
 
 ## Public data: CPMM indicators
