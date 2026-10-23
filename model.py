@@ -14,7 +14,8 @@ D0      Predefined rule, no prediction-dependent adaptation (always continue).
 D1      AI recommendation + human review before execution.
 D2      AI decision executed immediately, no routine human review.
 D2T     Selective autonomy: D2 when the AI's own uncertainty is below a
-        threshold theta, otherwise escalated to D1 (human review).
+        threshold theta OR less than tau_auto_h is left before the
+        junction; otherwise escalated to D1 (human review)
 ORACLE  Benchmark: perfect knowledge of the closure end, zero latency.
         Decision regret of an architecture = its cost minus ORACLE cost under
         common random numbers (same arrivals, disruptions and error draws).
